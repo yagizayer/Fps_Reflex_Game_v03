@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Helper;
-using System;
+using Cinemachine;
 
 [RequireComponent(typeof(Camera))]
 public class PlayerController : MonoBehaviour
@@ -14,9 +15,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField, Range(.01f, 100f)] private float FoV = 60;
     [SerializeField] private Transform Target;
     [SerializeField] private GameObject[] MuzzleFlashes;
-    [SerializeField] private Transform MuzzlePos;
+    [SerializeField] private Transform Muzzle;
+    [SerializeField] private GameObject BulletHole;
+    [SerializeField] private CinemachineVirtualCamera vCam;
     private Camera _camera;
-
 
     private Vector2 _screenSize = new Vector2(Screen.width, Screen.height);
 
@@ -26,6 +28,7 @@ public class PlayerController : MonoBehaviour
         _camera = GetComponent<Camera>();
         _camera.fieldOfView = FoV;
         Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Confined;
     }
 
     private void Update()
@@ -60,5 +63,40 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
         muzzleFlash.SetActive(false);
+    }
+
+    public void CreateBulletHole(Vector3 target)
+    {
+        Ray r = new Ray(Muzzle.position, target - Muzzle.position);
+        if (Physics.Raycast(r, out RaycastHit hit))
+        {
+            StartCoroutine(ShowingBulletHole(hit.point, hit.normal));
+        }
+    }
+
+    private IEnumerator ShowingBulletHole(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        GameObject bulletHole = GameObject.Instantiate(BulletHole, hitPoint + hitNormal / 10, Quaternion.identity);
+        Quaternion normalRot = Quaternion.LookRotation(hitNormal);
+        bulletHole.transform.rotation = normalRot;
+        
+        yield return new WaitForSecondsRealtime(2);
+        GameObject.Destroy(bulletHole);
+    }
+    public void RelockCursor()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Confined;
+    }
+    public void ShakeTheCamera()
+    {
+        StartCoroutine(CameraShaking());
+    }
+
+    private IEnumerator CameraShaking()
+    {
+        vCam.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>().m_AmplitudeGain = 2;
+        yield return new WaitForSecondsRealtime(.1f);
+        vCam.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>().m_AmplitudeGain = 0;
     }
 }
