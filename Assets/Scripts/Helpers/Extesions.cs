@@ -56,6 +56,13 @@ namespace Helper
             }
             return transform;
         }
+        public static List<Transform> Children(this Transform transform)
+        {
+            List<Transform> result = new List<Transform>();
+            foreach (Transform child in transform)
+                result.Add(child);
+            return result;
+        }
         public static bool HasChild(this Transform transform)
         {
             foreach (Transform child in transform)
