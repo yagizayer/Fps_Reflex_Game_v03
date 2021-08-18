@@ -10,6 +10,8 @@ public class SpawManager : MonoBehaviour
     [SerializeField] private GameObject SuspectPrefab;
     [SerializeField] private GameObject VictimPrefab;
     [SerializeField] private GameObject Player;
+    [SerializeField] private float RespawnRateMin = 1;
+    [SerializeField] private float RespawnRateMax = 2;
 
     private List<Transform> _children;
     private Dictionary<Transform, Transform[]> _neighborSpawners = new Dictionary<Transform, Transform[]>();
@@ -30,7 +32,8 @@ public class SpawManager : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSecondsRealtime(3);
+            float respawnTime = UnityEngine.Random.Range(RespawnRateMin, RespawnRateMax);
+            yield return new WaitForSecondsRealtime(respawnTime);
             (Transform, Transform) path = GenerateRandomPath();
             GameObject character = InstantiateRandomCharacter(path);
             character.transform.position = path.Item1.position;
