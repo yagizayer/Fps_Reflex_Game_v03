@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 using Helper;
 using Cinemachine;
@@ -11,14 +12,16 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private EventManager _EventManager;
     [SerializeField] private Animator HandsAndGun;
-    [SerializeField, Range(.01f, 1000f)] private float RotationSpeed = 360;
     [SerializeField, Range(.01f, 100f)] private float FoV = 60;
     [SerializeField] private Transform Target;
     [SerializeField] private GameObject[] MuzzleFlashes;
     [SerializeField] private Transform Muzzle;
     [SerializeField] private GameObject BulletHole;
     [SerializeField] private CinemachineVirtualCamera vCam;
+    [SerializeField] private Text VictimScore;
+    [SerializeField] private Text SuspectScore;
     private Camera _camera;
+    private int _victimScore = 0, _suspectScore = 0;
 
     private Vector2 _screenSize = new Vector2(Screen.width, Screen.height);
 
@@ -70,7 +73,17 @@ public class PlayerController : MonoBehaviour
         Ray r = new Ray(Muzzle.position, target - Muzzle.position);
         if (Physics.Raycast(r, out RaycastHit hit))
         {
-            StartCoroutine(ShowingBulletHole(hit.point, hit.normal));
+            if (hit.transform.CompareTag("Suspect") || hit.transform.CompareTag("Victim"))
+            {
+                hit.transform.GetComponent<CapsuleCollider>().enabled = false;
+                hit.transform.GetComponent<Animator>().enabled = false;
+                if (hit.transform.CompareTag("Victim")) VictimScore.text = (++_victimScore).ToString();
+                if (hit.transform.CompareTag("Suspect")) SuspectScore.text = (++_suspectScore).ToString();
+            }
+            else
+            {
+                StartCoroutine(ShowingBulletHole(hit.point, hit.normal));
+            }
         }
     }
 
@@ -79,7 +92,7 @@ public class PlayerController : MonoBehaviour
         GameObject bulletHole = GameObject.Instantiate(BulletHole, hitPoint + hitNormal / 10, Quaternion.identity);
         Quaternion normalRot = Quaternion.LookRotation(hitNormal);
         bulletHole.transform.rotation = normalRot;
-        
+
         yield return new WaitForSecondsRealtime(2);
         GameObject.Destroy(bulletHole);
     }
@@ -99,4 +112,6 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSecondsRealtime(.1f);
         vCam.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>().m_AmplitudeGain = 0;
     }
+
+
 }
